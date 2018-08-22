@@ -1,8 +1,9 @@
 <?php
 
-namespace nadzif\grid\widgets;
+namespace nadzif\grid;
 
 use kartik\grid\GridView as KartikGridView;
+use yii\bootstrap4\ButtonDropdown;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Json;
@@ -14,12 +15,12 @@ use yii\helpers\Json;
  */
 class GridView extends KartikGridView
 {
-    const FILTER_DATE_RANGE = '\app\base\DateRangePicker';
-    const FILTER_DATE       = '\app\base\DatePicker';
-    const FILTER_SELECT2    = '\app\base\Select2';
-    const ICON_ACTIVE   = '<span class="ion ion-checkmark text-success"></span>';
-    const ICON_INACTIVE = '<span class="ion ion-close text-danger"></span>';
-    public $filterPosition = KartikGridView::FILTER_POS_HEADER;
+    const FILTER_DATE_RANGE = '\nadzif\grid\widgets\DateRangePicker';
+    const FILTER_DATE       = '\nadzif\grid\widgets\DatePicker';
+    const FILTER_SELECT2    = '\nadzif\grid\widgets\Select2';
+    const ICON_ACTIVE       = '<span class="ion ion-checkmark text-success"></span>';
+    const ICON_INACTIVE     = '<span class="ion ion-close text-danger"></span>';
+    public $filterPosition   = KartikGridView::FILTER_POS_HEADER;
     public $bordered         = true;
     public $striped          = true;
     public $condensed        = true;
@@ -108,7 +109,7 @@ class GridView extends KartikGridView
         $itemsBefore = ArrayHelper::getValue($this->export, 'itemsBefore', []);
         $itemsAfter  = ArrayHelper::getValue($this->export, 'itemsAfter', []);
         $items       = ArrayHelper::merge($itemsBefore, $items, $itemsAfter);
-        return \yii\bootstrap4\ButtonDropdown::widget(
+        return ButtonDropdown::widget(
                 [
                     'label'       => $title,
                     'dropdown'    => ['items' => $items, 'encodeLabels' => false, 'options' => $menuOptions],

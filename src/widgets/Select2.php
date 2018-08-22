@@ -1,15 +1,11 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Nadzif Glovory
- * Date: 8/3/2018
- * Time: 9:27 AM
- */
 
 namespace nadzif\grid\widgets;
 
 
-class Select2
+use kartik\select2\Select2 as KartikSelect2;
+
+class Select2 extends KartikSelect2
 {
 
 }

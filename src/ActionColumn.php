@@ -1,6 +1,6 @@
 <?php
 
-namespace nadzif\base;
+namespace nadzif\grid;
 
 use kartik\grid\ActionColumn as KartikActionColumn;
 use yii\helpers\Html;

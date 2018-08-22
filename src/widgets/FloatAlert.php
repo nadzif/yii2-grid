@@ -6,10 +6,11 @@
  * Time: 10:03 PM
  */
 
-namespace common\widgets;
+namespace nadzif\grid\widgets;
 
 
-use rmrevin\yii\ionicon\Ion;
+use rmrevin\yii\fontawesome\FAS;
+use rmrevin\yii\fontawesome\FontAwesome;
 use yii\base\Widget;
 use yii\bootstrap4\Alert;
 use yii\helpers\Html;
@@ -35,7 +36,7 @@ class FloatAlert extends Widget
         parent::init();
 
         if ($this->icon === null) {
-            $this->icon = Ion::icon(Ion::_IOS_BELL_OUTLINE);
+            $this->icon = FAS::icon(FontAwesome::_BELL);
         }
 
         $this->options = ['options' => $this->options];

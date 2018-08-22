@@ -1,6 +1,6 @@
 <?php
 
-namespace nadzif\grid\models;
+namespace nadzif\grid;
 
 use nadzif\grid\GridView;
 use kartik\select2\Select2;
@@ -18,6 +18,7 @@ use yii\helpers\Html;
 class GridModel extends ActiveRecord
 {
     const FILTER_LIKE       = 'like';
+    const FILTER_DATETIME   = 'datetime';
     const FILTER_DATE       = 'date';
     const FILTER_DATE_RANGE = 'dateRange';
     const FILTER_EQUAL      = 'equal';
@@ -49,8 +50,12 @@ class GridModel extends ActiveRecord
     public $serialColumnClass   = 'kartik\grid\SerialColumn';
     public $serialColumnOptions = [];
 
+    public $checkboxColumn        = false;
+    public $checkboxColumnClass   = 'kartik\grid\CheckboxColumn';
+    public $checkboxColumnOptions = [];
+
     public $actionColumn        = true;
-    public $actionColumnClass   = 'common\base\ActionColumn';
+    public $actionColumnClass   = 'nadzif\grid\ActionColumn';
     public $actionColumnOptions = [];
 
     public $expandRowColumn        = false;
@@ -202,6 +207,13 @@ class GridModel extends ActiveRecord
                 $condition           = ['=', $attributeQuery];
                 break;
 
+            case self::FILTER_DATETIME:
+                $defaultFormat       = 'datetime';
+                $filterType          = $this->datePickerClass;
+                $filterWidgetOptions = $this->datePickerOptions;
+                $condition           = ['between', $attributeQuery];
+                break;
+
             default:
                 $defaultFormat = 'text';
                 $condition     = ['=', $attributeQuery];
@@ -230,6 +242,10 @@ class GridModel extends ActiveRecord
         }
     }
 
+    /**
+     * @return array
+     *
+     */
     public function queryRules()
     {
         $queryRules = [];
@@ -249,7 +265,7 @@ class GridModel extends ActiveRecord
         ];
     }
 
-    public function getDataProvider($searchQuery = false)
+    public function getDataProvider($searchQuery = false, $sort = [])
     {
         $query = $searchQuery ?: self::find();
 
@@ -261,12 +277,18 @@ class GridModel extends ActiveRecord
 
         $this->load($requestParams);
 
-        $dataProvider = new ActiveDataProvider([
+
+        $dataProviderConfig = [
             'query'      => $query,
-            //            'sort'       => ['defaultOrder' => ['name' => SORT_ASC, 'username' => SORT_DESC]],
             'pagination' => ['pageSize' => $this->pageSize],
             'key'        => $this->sortKey
-        ]);
+        ];
+
+        if ($sort) {
+            $dataProviderConfig['sort'] = $sort;
+        }
+
+        $dataProvider = new ActiveDataProvider($dataProviderConfig);
 
 
         if (!$this->validate()) {
@@ -297,10 +319,14 @@ class GridModel extends ActiveRecord
                         $filter[] = $explodedDate[0];
                         $filter[] = $explodedDate[1];
                     } else {
-                        $filter = [$attributeKey => $this->$attributeKey];
+                        if (preg_match('(\d{4}-\d{2}-\d{2})', $this->$attributeKey)) {
+                            $filter[] = $this->$attributeKey . ' 00:00:00';
+                            $filter[] = $this->$attributeKey . ' 23:59:59';
+                        } else {
+                            $filter = [$attributeKey => $this->$attributeKey];
+                        }
                     }
                 }
-
 
                 $query->andFilterWhere($filter);
             }
@@ -316,6 +342,10 @@ class GridModel extends ActiveRecord
 
         if ($this->serialColumn) {
             $columns[] = ArrayHelper::merge(['class' => $this->serialColumnClass], $this->serialColumnOptions);
+        }
+
+        if ($this->checkboxColumn) {
+            $columns[] = ArrayHelper::merge(['class' => $this->checkboxColumnClass], $this->checkboxColumnOptions);
         }
 
         if ($this->_columns) {
