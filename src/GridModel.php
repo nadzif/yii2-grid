@@ -2,7 +2,6 @@
 
 namespace nadzif\grid;
 
-use nadzif\grid\GridView;
 use kartik\select2\Select2;
 use yii\base\InvalidConfigException;
 use yii\data\ActiveDataProvider;
