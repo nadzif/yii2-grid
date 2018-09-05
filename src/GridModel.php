@@ -2,12 +2,14 @@
 
 namespace nadzif\grid;
 
+use http\Url;
 use kartik\select2\Select2;
 use yii\base\InvalidConfigException;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
+use yii\web\JsExpression;
 
 /**
  * Class GridModel
@@ -17,23 +19,24 @@ use yii\helpers\Html;
 class GridModel extends ActiveRecord
 {
     const FILTER_LIKE       = 'like';
-    const FILTER_DATETIME   = 'datetime';
     const FILTER_DATE       = 'date';
+    const FILTER_DATETIME   = 'datetime';
     const FILTER_DATE_RANGE = 'dateRange';
     const FILTER_EQUAL      = 'equal';
     const FILTER_MORE_THAN  = 'moreThan';
     const FILTER_LESS_THAN  = 'lessThan';
     const FILTER_RELATION   = 'relation';
     const FILTER_LIST       = 'list';
+    const FILTER_LIST_AJAX  = 'listAjax';
 
-    public $dropdownClass   = 'kartik\select2\Select2';
+    public $dropdownClass   = 'nadzif\grid\widgets\Select2';
     public $dropdownOptions = [];
     public $dropdownItemKey;
 
-    public $datePickerClass   = 'kartik\date\DatePicker';
+    public $datePickerClass   = 'nadzif\grid\widgets\DatePicker';
     public $datePickerOptions = [];
 
-    public $dateRangePickerClass   = 'kartik\daterange\DateRangePicker';
+    public $dateRangePickerClass   = 'nadzif\grid\widgets\DateRangePicker';
     public $dateRangePickerOptions = [];
 
     /** @var ActiveRecord */
@@ -46,15 +49,15 @@ class GridModel extends ActiveRecord
     public $sortKey  = 'id';
 
     public $serialColumn        = true;
-    public $serialColumnClass   = 'kartik\grid\SerialColumn';
+    public $serialColumnClass   = SerialColumn::class;
     public $serialColumnOptions = [];
 
     public $checkboxColumn        = false;
-    public $checkboxColumnClass   = 'kartik\grid\CheckboxColumn';
+    public $checkboxColumnClass   = Checkb;
     public $checkboxColumnOptions = [];
 
     public $actionColumn        = true;
-    public $actionColumnClass   = 'nadzif\grid\ActionColumn';
+    public $actionColumnClass   = 'backend\base\ActionColumn';
     public $actionColumnOptions = [];
 
     public $expandRowColumn        = false;
@@ -137,7 +140,6 @@ class GridModel extends ActiveRecord
                 }
             }
 
-
             if (is_array($attributes)) {
                 foreach ($attributes as $filterAttribute) {
                     $this->filterRule($filterAttribute, $attributesFilter, $filterOptions);
@@ -188,7 +190,37 @@ class GridModel extends ActiveRecord
                 $filterWidgetOptions = ArrayHelper::merge(
                     ['options' => ['placeholder' => $attributeLabel]],
                     $this->dropdownOptions,
+                    ArrayHelper::getValue($filterOptions, 'dropdownOptions', []),
                     [$this->dropdownItemKey => $filterOptions['items']]
+                );
+                break;
+
+            case self::FILTER_LIST_AJAX:
+                $pluginOptions = [
+                    'allowClear'         => true,
+                    'minimumInputLength' => 3,
+                    'language'           => [
+                        'errorLoading' => new JsExpression("function () { return 'Waiting for results...'; }"),
+                    ],
+                    'ajax'               => [
+                        'url'      => Url::to(ArrayHelper::getValue($this->dropdownOptions, 'ajaxUrl')),
+                        'dataType' => 'json',
+                        'data'     => new JsExpression('function(params) { return {q:params.term}; }')
+                    ],
+                    'escapeMarkup'       => new JsExpression('function (markup) { return markup; }'),
+                    'templateResult'     => new JsExpression('function(city) { return city.text; }'),
+                    'templateSelection'  => new JsExpression('function (city) { return city.text; }'),
+                ];
+                unset($this->dropdownOptions['ajaxUrl']);
+
+                $defaultFormat       = 'text';
+                $condition           = ['=', $attributeQuery];
+                $filterType          = $this->dropdownClass;
+                $filterWidgetOptions = ArrayHelper::merge(
+                    ['options' => ['placeholder' => $attributeLabel]],
+                    $this->dropdownOptions,
+                    ArrayHelper::getValue($filterOptions, 'dropdownOptions', []),
+                    ['pluginOptions' => $pluginOptions]
                 );
                 break;
 
@@ -211,6 +243,7 @@ class GridModel extends ActiveRecord
                 $filterType          = $this->datePickerClass;
                 $filterWidgetOptions = $this->datePickerOptions;
                 $condition           = ['between', $attributeQuery];
+
                 break;
 
             default:
@@ -249,7 +282,7 @@ class GridModel extends ActiveRecord
     {
         $queryRules = [];
         foreach ($this->getAttributesKey() as $attributeKey) {
-            $queryRules[$attributeKey] = $attributeKey;
+            $queryRules[$attributeKey] = $this->tableName() . '.' . $attributeKey;
         }
 
         return $queryRules;
@@ -264,7 +297,7 @@ class GridModel extends ActiveRecord
         ];
     }
 
-    public function getDataProvider($searchQuery = false, $sort = [])
+    public function getDataProvider($searchQuery = false)
     {
         $query = $searchQuery ?: self::find();
 
@@ -276,19 +309,18 @@ class GridModel extends ActiveRecord
 
         $this->load($requestParams);
 
-
-        $dataProviderConfig = [
+        $activeDataProviderConfig = [
             'query'      => $query,
-            'pagination' => ['pageSize' => $this->pageSize],
+            'pagination' => ['pageSize' => $this->pageSize,],
             'key'        => $this->sortKey
         ];
 
-        if ($sort) {
-            $dataProviderConfig['sort'] = $sort;
+        if ($this->hasAttribute('createdAt')) {
+            $activeDataProviderConfig['sort'] = ['defaultOrder' => ['createdAt' => SORT_DESC]];
+
         }
 
-        $dataProvider = new ActiveDataProvider($dataProviderConfig);
-
+        $dataProvider = new ActiveDataProvider($activeDataProviderConfig);
 
         if (!$this->validate()) {
             return $dataProvider;
@@ -300,32 +332,23 @@ class GridModel extends ActiveRecord
             }
 
             foreach ($this->_filters[$attributeKey] as $filter) {
-
-                /** @todo make more eficient */
-                $dataProvider->sort->attributes[] = [
-                    $attributeKey => [
-                        'asc'  => [$attributeKey => SORT_ASC],
-                        'desc' => [$attributeKey => SORT_DESC],
-                    ]
+                $dataProvider->sort->attributes[$attributeKey] = [
+                    'asc'  => [$this->queryRules()[$attributeKey] => SORT_ASC],
+                    'desc' => [$this->queryRules()[$attributeKey] => SORT_DESC],
                 ];
 
                 if ($filter[0] != 'between') {
                     $filter[] = $this->$attributeKey;
                 } else {
                     $explodedDate = explode($this->dateRangeFilterSeparator, $this->$attributeKey);
-
                     if (count($explodedDate) == 2) {
                         $filter[] = $explodedDate[0];
                         $filter[] = $explodedDate[1];
                     } else {
-                        if (preg_match('(\d{4}-\d{2}-\d{2})', $this->$attributeKey)) {
-                            $filter[] = $this->$attributeKey . ' 00:00:00';
-                            $filter[] = $this->$attributeKey . ' 23:59:59';
-                        } else {
-                            $filter = [$attributeKey => $this->$attributeKey];
-                        }
+                        $filter = [$attributeKey => $this->$attributeKey];
                     }
                 }
+
 
                 $query->andFilterWhere($filter);
             }
