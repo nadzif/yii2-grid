@@ -2,11 +2,9 @@
 
 namespace nadzif\grid;
 
+use kartik\export\ExportMenu;
 use kartik\grid\GridView as KartikGridView;
-use yii\bootstrap4\ButtonDropdown;
-use yii\helpers\ArrayHelper;
-use yii\helpers\Html;
-use yii\helpers\Json;
+use nadzif\grid\columns\SerialColumn;
 
 /**
  * Description of GridView
@@ -44,79 +42,31 @@ class GridView extends KartikGridView
 
     public function renderExport()
     {
-        if ($this->export === false || !is_array($this->export)
-            || empty($this->exportConfig)
-            || !is_array($this->exportConfig)
-        ) {
-            return '';
-        }
-        $title       = $this->export['label'];
-        $icon        = $this->export['icon'];
-        $options     = $this->export['options'];
-        $menuOptions = $this->export['menuOptions'];
-        $iconPrefix  = $this->export['fontAwesome'] ? 'fas fa-' : 'glyphicon glyphicon-';
-        $title       = ($icon == '') ? $title : "<i class='{$iconPrefix}{$icon}'></i> {$title}";
-        if (!isset($this->_module->downloadAction)) {
-            $action = ["/{$this->moduleId}/export/download"];
-        } else {
-            $action = (array)$this->_module->downloadAction;
-        }
-        $encoding    = ArrayHelper::getValue($this->export, 'encoding', 'utf-8');
-        $bom         = ArrayHelper::getValue($this->export, 'bom', true);
-        $target      = ArrayHelper::getValue($this->export, 'target', self::TARGET_POPUP);
-        $formOptions = [
-            'class'  => 'kv-export-form',
-            'style'  => 'display:none',
-            'target' => ($target == self::TARGET_POPUP) ? 'kvDownloadDialog' : $target,
-        ];
-        $form        = Html::beginForm($action, 'post', $formOptions) . "\n" .
-            Html::hiddenInput('module_id', $this->moduleId) . "\n" .
-            Html::hiddenInput('export_hash') . "\n" .
-            Html::hiddenInput('export_filetype') . "\n" .
-            Html::hiddenInput('export_filename') . "\n" .
-            Html::hiddenInput('export_mime') . "\n" .
-            Html::hiddenInput('export_config') . "\n" .
-            Html::hiddenInput('export_encoding', $encoding) . "\n" .
-            Html::hiddenInput('export_bom', $bom) . "\n" .
-            Html::textarea('export_content') . "\n" .
-            Html::endForm();
-        $items       = empty($this->export['header']) ? [] : [$this->export['header']];
-        foreach ($this->exportConfig as $format => $setting) {
-            $iconOptions = ArrayHelper::getValue($setting, 'iconOptions', []);
-            Html::addCssClass($iconOptions, $iconPrefix . $setting['icon']);
-            $label  = (empty($setting['icon']) || $setting['icon'] == '')
-                ? $setting['label']
-                :
-                Html::tag('i', '', $iconOptions) . ' ' . $setting['label'];
-            $mime   = ArrayHelper::getValue($setting, 'mime', 'text/plain');
-            $config = ArrayHelper::getValue($setting, 'config', []);
-            if ($format === self::JSON) {
-                unset($config['jsonReplacer']);
+        /** @var GridModel $filterModel */
+        $filterModel     = $this->filterModel;
+        $columns         = $filterModel->getColumns();
+        $exportedColumns = [['class' => SerialColumn::class]];
+        foreach ($columns as $column) {
+            if (!isset($column['class'])) {
+                $exportedColumns[] = $column;
             }
-            $dataToHash = $this->moduleId . $setting['filename'] . $mime . $encoding . $bom . Json::encode($config);
-            $hash       = \Yii::$app->security->hashData($dataToHash, $this->_module->exportEncryptSalt);
-            $items[]    = [
-                'label'       => $label,
-                'url'         => '#',
-                'linkOptions' => [
-                    'class'     => 'export-' . $format,
-                    'data-mime' => $mime,
-                    'data-hash' => $hash,
-                ],
-                'options'     => $setting['options'],
-            ];
         }
-        $itemsBefore = ArrayHelper::getValue($this->export, 'itemsBefore', []);
-        $itemsAfter  = ArrayHelper::getValue($this->export, 'itemsAfter', []);
-        $items       = ArrayHelper::merge($itemsBefore, $items, $itemsAfter);
-        return ButtonDropdown::widget(
-                [
-                    'label'       => $title,
-                    'dropdown'    => ['items' => $items, 'encodeLabels' => false, 'options' => $menuOptions],
-                    'options'     => $this->exportContainer,
-                    'encodeLabel' => false,
-                ]
-            ) . $form;
+
+        return ExportMenu::widget([
+            'dataProvider'          => $this->dataProvider,
+            'columns'               => $exportedColumns,
+            'target'                => ExportMenu::TARGET_BLANK,
+            'batchSize'             => 1000,
+            'enableFormatter'       => true,
+            'fontAwesome'           => false,
+            'pjaxContainerId'       => 'kv-pjax-container',
+            'dropdownOptions'       => [
+                'label'       => \Yii::t('app', 'Export'),
+                'class'       => 'btn btn-custom-toolbar',
+                'itemsBefore' => [Html::tag('p', \Yii::t('app', 'Export All Data'))],
+            ],
+            'columnSelectorOptions' => ['class' => 'btn-custom-toolbar',]
+        ]);
     }
 
 
