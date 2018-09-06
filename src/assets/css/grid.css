@@ -2,25 +2,25 @@
     position: relative;
 }
 
-.kv-grid-table .filters {
+.gridview-wrapper .kv-grid-table .filters {
     display: none;
 }
 
-.datatable-filters .filters {
+.gridview-wrapper .datatable-filters .filters {
     display: table-row;
 }
 
-.datatables-tools {
+.gridview-wrapper .datatables-tools {
     display: flex;
     justify-content: flex-end;
     float: right;
 }
 
-.datatables-tools > * {
+.gridview-wrapper .datatables-tools > * {
     margin-left: 5px;
 }
 
-.gridview-toolbar-left {
+.gridview-wrapper .gridview-toolbar-left {
     display: flex;
     justify-content: end;
     position: relative;
@@ -30,24 +30,34 @@
     top: 0;
 }
 
-.gridview-toolbar-left,
-.datatables-tools {
+.gridview-wrapper .gridview-toolbar-left,
+.gridview-wrapper .datatables-tools {
     width: 100%;
     margin-bottom: 10px;
 }
 
-.gridview-toolbar-left .grid-size-filter + .select2 {
+.gridview-wrapper .gridview-toolbar-left .grid-size-filter + .select2 {
     width: 75px !important;
+}
+
+.gridview-wrapper .grid-view-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.gridview-wrapper .grid-view-footer > * {
+    margin: 0;
 }
 
 /* Small devices (landscape phones, 576px and up) */
 @media (min-width: 576px) {
-    .gridview-toolbar-left,
-    .datatables-tools {
+    .gridview-wrapper .gridview-toolbar-left,
+    .gridview-wrapper .datatables-tools {
         width: 50%;
     }
 
-    .gridview-toolbar-left {
+    .gridview-wrapper .gridview-toolbar-left {
         position: absolute;
         justify-content: start;
     }

@@ -36,7 +36,7 @@ class GridView extends KartikGridView
         'target'           => '_blank',
         'icon'             => 'export'
     ];
-    public $layout           = "<div class='grid-view-toolbar'>{toolbar}</div>{items}{pager}{summary}";
+    public $layout           = "<div class='grid-view-toolbar'>{toolbar}</div>{items}<div class='grid-view-footer'>{summary}{pager}</div>";
     public $resizableColumns = true;
     public $pager            = [
         'nextPageLabel'  => '<i class="fa fa-angle-right"></i>',
@@ -47,7 +47,7 @@ class GridView extends KartikGridView
 
     public $actionAjax = true;
 
-    public $gridSize = [
+    public $pageSizeData = [
         5   => 5,
         10  => 10,
         25  => 25,
@@ -153,7 +153,7 @@ class GridView extends KartikGridView
                 'attribute'    => 'pageSize',
                 'theme'        => Select2::THEME_BOOTSTRAP,
                 'hideSearch'   => true,
-                'data'         => $this->gridSize,
+                'data'         => $this->pageSizeData,
                 'options'      => ['class' => 'grid-size-filter'],
                 'pluginEvents' => [
                     'change' => new JsExpression('function(e){$.pjax({container: \'#' . $this->id . '-pjax\'})}')
