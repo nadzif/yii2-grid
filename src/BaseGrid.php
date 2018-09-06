@@ -3,7 +3,13 @@
 namespace nadzif\grid;
 
 use http\Url;
-use kartik\select2\Select2;
+use nadzif\grid\columns\ActionColumn;
+use nadzif\grid\columns\CheckboxColumn;
+use nadzif\grid\columns\ExpandRowColumn;
+use nadzif\grid\columns\SerialColumn;
+use nadzif\grid\widgets\DatePicker;
+use nadzif\grid\widgets\DateRangePicker;
+use nadzif\grid\widgets\Select2;
 use yii\base\InvalidConfigException;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
@@ -18,25 +24,25 @@ use yii\web\JsExpression;
  */
 class GridModel extends ActiveRecord
 {
-    const FILTER_LIKE       = 'like';
     const FILTER_DATE       = 'date';
-    const FILTER_DATETIME   = 'datetime';
+    const FILTER_TIME       = 'time';
     const FILTER_DATE_RANGE = 'dateRange';
+    const FILTER_LIKE       = 'like';
     const FILTER_EQUAL      = 'equal';
     const FILTER_MORE_THAN  = 'moreThan';
     const FILTER_LESS_THAN  = 'lessThan';
-    const FILTER_RELATION   = 'relation';
+    const FILTER_BETWEEN    = 'between';
     const FILTER_LIST       = 'list';
     const FILTER_LIST_AJAX  = 'listAjax';
 
-    public $dropdownClass   = 'nadzif\grid\widgets\Select2';
+    public $dropdownClass   = Select2::class;
     public $dropdownOptions = [];
     public $dropdownItemKey;
 
-    public $datePickerClass   = 'nadzif\grid\widgets\DatePicker';
+    public $datePickerClass   = DatePicker::class;
     public $datePickerOptions = [];
 
-    public $dateRangePickerClass   = 'nadzif\grid\widgets\DateRangePicker';
+    public $dateRangePickerClass   = DateRangePicker::class;
     public $dateRangePickerOptions = [];
 
     /** @var ActiveRecord */
@@ -53,15 +59,15 @@ class GridModel extends ActiveRecord
     public $serialColumnOptions = [];
 
     public $checkboxColumn        = false;
-    public $checkboxColumnClass   = Checkb;
+    public $checkboxColumnClass   = CheckboxColumn::class;
     public $checkboxColumnOptions = [];
 
     public $actionColumn        = true;
-    public $actionColumnClass   = 'backend\base\ActionColumn';
+    public $actionColumnClass   = ActionColumn::class;
     public $actionColumnOptions = [];
 
     public $expandRowColumn        = false;
-    public $expandRowColumnClass   = 'kartik\grid\ExpandRowColumn';
+    public $expandRowColumnClass   = ExpandRowColumn::class;
     public $expandRowColumnOptions = [];
 
 
