@@ -1,6 +1,6 @@
 <?php
 
-namespace nadzif\grid;
+namespace nadzif\grid\columns;
 
 use kartik\grid\ActionColumn as KartikActionColumn;
 use yii\helpers\Html;
@@ -9,7 +9,7 @@ use yii\web\JsExpression;
 
 class ActionColumn extends KartikActionColumn
 {
-    public $template      = '<div class="action-column">{update-ajax} {delete-ajax}</div>';
+
     public $action;
     public $keyName       = 'hashId';
     public $header        = '<i class="icon ion-navicon-round"></i>';
@@ -17,6 +17,18 @@ class ActionColumn extends KartikActionColumn
     public $pjax          = false;
     public $updateOptions = ['label' => '<i class="btn btn-link text-info p-0 fas fa-edit"></i>'];
     public $deleteOptions = ['label' => '<i class="btn btn-link text-info p-0 fas fa-trash-alt"></i>'];
+    public $ajax          = true;
+
+    public function init()
+    {
+        parent::init();
+
+        if ($this->ajax) {
+            $this->template = '<div class="action-column">{update-ajax} {delete-ajax}</div>';
+        } else {
+            $this->template = '<div class="action-column">{view} {update} {delete}</div>';
+        }
+    }
 
     public function createUrl($action, $model, $key, $index)
     {
