@@ -176,8 +176,8 @@ class GridView extends KartikGridView
         $filterId = ArrayHelper::getValue($this->filterRowOptions, 'id');
 
         if ($filterId) {
-            $filterToggleButton =
-                new JsExpression("(function () { $( \"#" . $this->id . "\" ).toggleClass(\"datatable-filters\"); })()");
+            $filterToggleButton = new JsExpression("(function () { $( \"#" . $this->id
+                . "\" ).parents('.gridview-wrapper').toggleClass(\"datatable-filters\"); })()");
 
             $toolbar .= Html::button(FAS::icon(FontAwesome::_FILTER), [
                 'class'   => 'btn btn-info',
