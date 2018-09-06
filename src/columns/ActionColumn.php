@@ -24,10 +24,10 @@ class ActionColumn extends KartikActionColumn
         parent::init();
 
         if ($this->ajax) {
-            $this->template = '<div class="action-column">{update-ajax} {delete-ajax}</div>';
-        } else {
-            $this->template = '<div class="action-column">{view} {update} {delete}</div>';
+            $this->template = '{update-ajax} {delete-ajax}</div>';
         }
+
+        $this->template = Html::tag('div', $this->template, ['class' => 'action-column']);
     }
 
     public function createUrl($action, $model, $key, $index)
