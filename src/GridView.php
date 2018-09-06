@@ -45,6 +45,8 @@ class GridView extends KartikGridView
         'lastPageLabel'  => '<i class="fa fa-angle-double-right"></i>',
     ];
 
+    public $actionAjax = true;
+
     public $gridSize = [
         5   => 5,
         10  => 10,
@@ -194,9 +196,7 @@ class GridView extends KartikGridView
         ]);
 
         $toolbar .= parent::renderToolbar();
-
         $toolbar .= Html::endTag('div');
-
 
         return $toolbar;
     }
