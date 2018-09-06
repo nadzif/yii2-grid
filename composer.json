@@ -19,11 +19,12 @@
   "require": {
     "php": ">=5.5.0",
     "yiisoft/yii2": ">=2.0",
-    "yiisoft/yii2-bootstrap4": "~1.0.0",
     "kartik-v/yii2-grid": "^3.1.7",
     "kartik-v/yii2-widget-select2": "^2.1@dev",
     "kartik-v/yii2-widget-datepicker": "^1.4@dev",
     "kartik-v/yii2-date-range": "^1.6@dev",
+    "kartik-v/yii2-export": "^1.2",
+    "nadzif/yii2-growl-js": "@dev",
     "demogorgorn/yii2-ajax-submit-button": "dev-master",
     "rmrevin/yii2-fontawesome": "~3.0"
   },
@@ -31,5 +32,11 @@
     "psr-4": {
       "nadzif\\grid\\": "src/"
     }
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/nadzif/yii2-growl-js"
+    }
+  ]
 }
