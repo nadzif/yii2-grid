@@ -22,7 +22,7 @@ use yii\web\JsExpression;
  *
  * @package common\base
  */
-class GridModel extends ActiveRecord
+class BaseGrid extends ActiveRecord
 {
     const FILTER_DATE       = 'date';
     const FILTER_TIME       = 'time';
