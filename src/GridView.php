@@ -2,9 +2,14 @@
 
 namespace nadzif\grid;
 
-use kartik\export\ExportMenu;
+//use kartik\export\ExportMenu;
 use kartik\grid\GridView as KartikGridView;
 use nadzif\grid\columns\SerialColumn;
+use rmrevin\yii\fontawesome\FAS;
+use rmrevin\yii\fontawesome\FontAwesome;
+use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
+use yii\web\JsExpression;
 
 /**
  * Description of GridView
@@ -52,21 +57,51 @@ class GridView extends KartikGridView
             }
         }
 
-        return ExportMenu::widget([
-            'dataProvider'          => $this->dataProvider,
-            'columns'               => $exportedColumns,
-            'target'                => ExportMenu::TARGET_BLANK,
-            'batchSize'             => 1000,
-            'enableFormatter'       => true,
-            'fontAwesome'           => false,
-            'pjaxContainerId'       => 'kv-pjax-container',
-            'dropdownOptions'       => [
-                'label'       => \Yii::t('app', 'Export'),
-                'class'       => 'btn btn-custom-toolbar',
-                'itemsBefore' => [Html::tag('p', \Yii::t('app', 'Export All Data'))],
-            ],
-            'columnSelectorOptions' => ['class' => 'btn-custom-toolbar',]
+//        return ExportMenu::widget([
+//            'dataProvider'          => $this->dataProvider,
+//            'columns'               => $exportedColumns,
+//            'target'                => ExportMenu::TARGET_BLANK,
+//            'batchSize'             => 1000,
+//            'enableFormatter'       => true,
+//            'fontAwesome'           => false,
+//            'pjaxContainerId'       => 'kv-pjax-container',
+//            'dropdownOptions'       => [
+//                'label'       => \Yii::t('app', 'Export'),
+//                'class'       => 'btn btn-custom-toolbar',
+//                'itemsBefore' => [Html::tag('p', \Yii::t('app', 'Export All Data'))],
+//            ],
+//            'columnSelectorOptions' => ['class' => 'btn-custom-toolbar',]
+//        ]);
+    }
+
+    protected function renderToolbar()
+    {
+        $toolbar = parent::renderToolbar();
+        $toolbar .= Html::beginTag('div', ['class' => 'datatables-tools']);
+        $toolbar .= Html::beginTag('div', ['id' => $this->id . '-filters', 'class' => 'select2-wrap']);
+        $toolbar .= Html::endTag('div');;
+        $filterId = ArrayHelper::getValue($this->filterRowOptions, 'id');
+
+        if ($filterId) {
+            $filterToggleButton =
+                new JsExpression("(function () { $( \"#" . $this->id . "\" ).toggleClass(\"datatable-filters\"); })()");
+
+            $toolbar .= Html::button(FAS::icon(FontAwesome::_FILTER), [
+                'class'   => 'btn btn-info',
+                'onclick' => $filterToggleButton
+            ]);
+        }
+
+        $reloadPjaxJS =
+            new JsExpression("(function () { $.pjax.reload({container:\"#" . $this->id . "-pjax\"}); })();");
+
+        $toolbar .= Html::button(FAS::icon(FontAwesome::_SYNC), [
+            'class'   => 'btn btn-info',
+            'onclick' => $reloadPjaxJS
         ]);
+
+        $toolbar .= Html::endTag('div');
+        return $toolbar;
     }
 
 

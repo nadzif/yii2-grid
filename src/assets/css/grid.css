@@ -1,0 +1,7 @@
+.kv-grid-table .filters {
+    display: none;
+}
+
+.datatable-filters .filters {
+    display: table-row;
+}
