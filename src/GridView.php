@@ -42,7 +42,7 @@ class GridView extends KartikGridView
 
     public function renderExport()
     {
-        /** @var GridModel $filterModel */
+        /** @var BaseGrid $filterModel */
         $filterModel     = $this->filterModel;
         $columns         = $filterModel->getColumns();
         $exportedColumns = [['class' => SerialColumn::class]];
