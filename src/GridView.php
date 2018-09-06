@@ -194,13 +194,7 @@ class GridView extends KartikGridView
 
     protected function renderToolbar()
     {
-        $toolbar = parent::renderToolbar();
-
-
-        $toolbar .= Html::beginTag('div', ['class' => 'datatables-tools']);
-        $toolbar .= Html::beginTag('div', ['id' => $this->id . '-filters', 'class' => 'select2-wrap']);
-
-        $toolbar .= Html::endTag('div');;
+        $toolbar  = Html::beginTag('div', ['class' => 'datatables-tools']);
         $filterId = ArrayHelper::getValue($this->filterRowOptions, 'id');
 
         if ($filterId) {
@@ -222,6 +216,12 @@ class GridView extends KartikGridView
         ]);
 
         $toolbar .= Html::endTag('div');
+
+        $toolbar .= parent::renderToolbar();
+
+
         return $toolbar;
     }
+
+
 }
