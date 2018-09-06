@@ -82,7 +82,7 @@ class ActionColumn extends KartikActionColumn
                     'aria-label' => $title,
                     'onclick'    => "
                                 var a = this;
-                                if (confirm('$confirmationMessage')) {
+                                if (yii.confirm('$confirmationMessage')) {
                                     $.ajax('$url', {
                                         type: 'POST'
                                     }).done(function(data) {
