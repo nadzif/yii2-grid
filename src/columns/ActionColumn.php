@@ -24,7 +24,7 @@ class ActionColumn extends KartikActionColumn
         parent::init();
 
         if ($this->ajax) {
-            $this->template = '{update-ajax} {delete-ajax}</div>';
+            $this->template = '{update-ajax} {delete-ajax}';
         }
 
         $this->template = Html::tag('div', $this->template, ['class' => 'action-column']);
