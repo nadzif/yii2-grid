@@ -47,6 +47,9 @@ class GridView extends KartikGridView
 
     public $actionAjax = true;
 
+    public $createView;
+    public $createViewParams = [];
+
     public $updateView;
     public $updateViewParams = [];
 
@@ -143,10 +146,12 @@ class GridView extends KartikGridView
         echo Html::endTag('div');;
 
         if ($this->actionAjax) {
-            echo $this->getView()->render($this->updateView, ArrayHelper::merge(
-                ['gridId' => $this->id],
-                $this->updateViewParams
-            ));
+            if ($this->updateView && $this->updateViewParams) {
+                echo $this->getView()->render($this->updateView, ArrayHelper::merge(
+                    ['gridId' => $this->id],
+                    $this->updateViewParams
+                ));
+            }
         }
 
     }
@@ -169,6 +174,13 @@ class GridView extends KartikGridView
                     'change' => new JsExpression('function(e){$.pjax({container: \'#' . $this->id . '-pjax\'})}')
                 ]
             ]);
+
+            if ($this->createView && $this->createViewParams) {
+                echo $this->getView()->render($this->createView, ArrayHelper::merge(
+                    ['gridId' => $this->id],
+                    $this->createViewParams
+                ));
+            }
             echo Html::endTag('div');;
 
         }
