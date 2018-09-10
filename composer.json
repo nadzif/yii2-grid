@@ -25,7 +25,6 @@
     "kartik-v/yii2-date-range": "^1.6@dev",
     "kartik-v/yii2-export": "^1.2",
     "nadzif/yii2-growl-js": "@dev",
-    "demogorgorn/yii2-ajax-submit-button": "dev-master",
     "rmrevin/yii2-fontawesome": "~3.0"
   },
   "autoload": {
