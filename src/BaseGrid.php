@@ -13,6 +13,7 @@ use nadzif\grid\widgets\Select2;
 use yii\base\InvalidConfigException;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveRecord;
+use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\web\JsExpression;
@@ -24,20 +25,19 @@ use yii\web\JsExpression;
  */
 class BaseGrid extends ActiveRecord
 {
-    const FILTER_DATE       = 'date';
-    const FILTER_TIME       = 'time';
-    const FILTER_DATE_RANGE = 'dateRange';
     const FILTER_LIKE       = 'like';
     const FILTER_EQUAL      = 'equal';
+    const FILTER_DATE       = 'date';
+    const FILTER_DATE_RANGE = 'dateRange';
     const FILTER_MORE_THAN  = 'moreThan';
     const FILTER_LESS_THAN  = 'lessThan';
     const FILTER_BETWEEN    = 'between';
     const FILTER_LIST       = 'list';
     const FILTER_LIST_AJAX  = 'listAjax';
 
-    public $dropdownClass   = Select2::class;
-    public $dropdownOptions = [];
-    public $dropdownItemKey;
+    public $dropDownClass   = Select2::class;
+    public $dropDownOptions = [];
+    public $dropDownItemKey;
 
     public $datePickerClass   = DatePicker::class;
     public $datePickerOptions = [];
@@ -45,10 +45,10 @@ class BaseGrid extends ActiveRecord
     public $dateRangePickerClass   = DateRangePicker::class;
     public $dateRangePickerOptions = [];
 
-    /** @var ActiveRecord */
-    public $activeRecordModel;
     public $dateFilterFormat         = 'yyyy-mm-dd';
     public $dateRangeFilterSeparator = ' - ';
+
+    public $betweenSeparator = ' - ';
 
     public $joinWith = [];
     public $pageSize = 10;
@@ -66,14 +66,12 @@ class BaseGrid extends ActiveRecord
     public $actionColumnClass   = ActionColumn::class;
     public $actionColumnOptions = [];
 
-    public $expandRowColumn        = false;
-    public $expandRowColumnClass   = ExpandRowColumn::class;
-    public $expandRowColumnOptions = [];
-
-
-    private $_activeRecord;
+    public  $expandRowColumn        = false;
+    public  $expandRowColumnClass   = ExpandRowColumn::class;
+    public  $expandRowColumnOptions = [];
     private $_columns;
     private $_filters;
+    private $_queryRules            = [];
 
     /**
      * @param $key
@@ -92,19 +90,15 @@ class BaseGrid extends ActiveRecord
     {
         parent::init();
 
-        if ($this->activeRecordModel) {
-            $this->_activeRecord = new $this->activeRecordModel;
-        }
-
-        if ($this->dropdownClass == Select2::className()) {
-            $this->dropdownOptions = ArrayHelper::merge([
+        if ($this->dropDownClass == Select2::className()) {
+            $this->dropDownOptions = ArrayHelper::merge([
                 'theme'         => Select2::THEME_BOOTSTRAP,
                 'pluginOptions' => ['allowClear' => true]
-            ], $this->dropdownOptions);
+            ], $this->dropDownOptions);
 
-            $this->dropdownItemKey = 'data';
+            $this->dropDownItemKey = 'data';
         } else {
-            $this->dropdownItemKey = 'items';
+            $this->dropDownItemKey = 'items';
         }
 
         $this->datePickerOptions = ArrayHelper::merge([
@@ -127,39 +121,27 @@ class BaseGrid extends ActiveRecord
         ], $this->dateRangePickerOptions);
 
 
-        $this->generateFilterRules();
+        $this->generateGridRules();
     }
 
-    private function generateFilterRules()
+    private function generateGridRules()
     {
-        foreach ($this->filterRules() as $filterRule) {
+        foreach ($this->gridRules() as $gridRule) {
+            $attributes = $gridRule[0];
+            ArrayHelper::remove($gridRule, 0);
 
-            $attributes       = $filterRule[0];
-            $attributesFilter = count($filterRule) == 1 ? self::FILTER_LIKE : $filterRule[1];
-            $filterOptions    = [];
+            $attributes = is_array($attributes) ? $attributes : [$attributes];
 
-            if (count($filterRule) > 1) {
-                foreach ($filterRule as $key => $value) {
-                    if ($key != 0 || $key != 1) {
-                        $filterOptions[$key] = $value;
-                    }
-                }
-            }
-
-            if (is_array($attributes)) {
-                foreach ($attributes as $filterAttribute) {
-                    $this->filterRule($filterAttribute, $attributesFilter, $filterOptions);
-                }
-            } else {
-                $this->filterRule($attributes, $attributesFilter, $filterOptions);
+            foreach ($attributes as $filterAttribute) {
+                $this->generateGridRule($filterAttribute, $gridRule);
             }
 
         }
     }
 
-    public function filterRules()
+    public function gridRules()
     {
-        return [[$this->getAttributesKey(), self::FILTER_LIKE]];
+        return [[$this->getAttributesKey(), 'filter' => self::FILTER_LIKE]];
     }
 
     protected function getAttributesKey()
@@ -167,105 +149,105 @@ class BaseGrid extends ActiveRecord
         return array_keys($this->attributes);
     }
 
-    private function filterRule($attribute, $filter, $filterOptions = [])
+    private function generateGridRule($attribute, $columnOptions = [])
     {
-        $attributeQuery = $this->queryRules()[$attribute];
-        $attributeLabel = ArrayHelper::getValue($filterOptions, 'label', $this->getAttributeLabel($attribute));
+        $attributeLabel = ArrayHelper::getValue($columnOptions, 'label', $this->getAttributeLabel($attribute));
 
-        switch ($filter) {
-            case self::FILTER_LIKE:
-                $defaultFormat       = 'text';
-                $condition           = ['like', $attributeQuery];
-                $filterWidgetOptions = ['placeholder' => 'tes'];
-                break;
+        $filter      = ArrayHelper::getValue($columnOptions, 'filter', self::FILTER_LIKE);
+        $filterQuery =
+            ArrayHelper::getValue($columnOptions, 'filterQuery', $this->queryRelated($attribute, $this->tableName()));
 
-            case self::FILTER_MORE_THAN:
-                $defaultFormat = 'double';
-                $condition     = ['>=', $attributeQuery];
-                break;
+        $this->_queryRules[$attribute] = $filterQuery;
 
-            case self::FILTER_LESS_THAN:
-                $defaultFormat = 'double';
-                $condition     = ['<=', $attributeQuery];
-                break;
+        $queryParamAction = false;
+        ArrayHelper::remove($columnOptions, 'filterQuery');
 
-            case self::FILTER_LIST:
-                $defaultFormat       = 'text';
-                $condition           = ['=', $attributeQuery];
-                $filterType          = $this->dropdownClass;
-                $filterWidgetOptions = ArrayHelper::merge(
-                    ['options' => ['placeholder' => $attributeLabel]],
-                    $this->dropdownOptions,
-                    ArrayHelper::getValue($filterOptions, 'dropdownOptions', []),
-                    [$this->dropdownItemKey => $filterOptions['items']]
-                );
-                break;
+        if ($filter == self::FILTER_LIKE) {
+            $defaultFormat       = 'text';
+            $condition           = ['like', $filterQuery];
+            $filterWidgetOptions = ['placeholder' => $attributeLabel];
+        } elseif ($filter == self::FILTER_EQUAL) {
+            $defaultFormat       = 'text';
+            $condition           = ['=', $filterQuery];
+            $filterWidgetOptions = ['placeholder' => $attributeLabel];
+        } elseif ($filter == self::FILTER_LIST) {
+            $defaultFormat       = 'text';
+            $condition           = ['=', $filterQuery];
+            $filterType          = $this->dropDownClass;
+            $filterWidgetOptions = ArrayHelper::merge(
+                ['options' => ['placeholder' => $attributeLabel]],
+                $this->dropDownOptions,
+                ArrayHelper::getValue($columnOptions, 'widgetOptions', []),
+                [$this->dropDownItemKey => $columnOptions['items']]
+            );
+        } elseif ($filter == self::FILTER_DATE) {
+            $defaultFormat       = 'date';
+            $filterType          = $this->datePickerClass;
+            $filterWidgetOptions = ArrayHelper::merge(
+                ['options' => ['placeholder' => $attributeLabel]],
+                $this->datePickerOptions,
+                ArrayHelper::getValue($columnOptions, 'widgetOptions', [])
+            );
+            $condition           = ['=', $filterQuery];
+        } elseif ($filter == self::FILTER_DATE_RANGE) {
+            $defaultFormat       = 'date';
+            $filterType          = $this->dateRangePickerClass;
+            $filterWidgetOptions = ArrayHelper::merge(
+                ['options' => ['placeholder' => $attributeLabel]],
+                $this->dateRangePickerOptions,
+                ArrayHelper::getValue($columnOptions, 'widgetOptions', [])
+            );
+            $condition           = ['between', $filterQuery];
+            $queryParamAction    = ['explode', $this->dateRangeFilterSeparator];
 
-            case self::FILTER_LIST_AJAX:
-                $pluginOptions = [
-                    'allowClear'         => true,
-                    'minimumInputLength' => 3,
-                    'language'           => [
-                        'errorLoading' => new JsExpression("function () { return 'Waiting for results...'; }"),
-                    ],
-                    'ajax'               => [
-                        'url'      => Url::to(ArrayHelper::getValue($this->dropdownOptions, 'ajaxUrl')),
-                        'dataType' => 'json',
-                        'data'     => new JsExpression('function(params) { return {q:params.term}; }')
-                    ],
-                    'escapeMarkup'       => new JsExpression('function (markup) { return markup; }'),
-                    'templateResult'     => new JsExpression('function(city) { return city.text; }'),
-                    'templateSelection'  => new JsExpression('function (city) { return city.text; }'),
-                ];
-                unset($this->dropdownOptions['ajaxUrl']);
+        } elseif ($filter == self::FILTER_MORE_THAN) {
+            $defaultFormat = 'double';
+            $condition     = ['>=', $filterQuery];
+        } elseif ($filter == self::FILTER_LESS_THAN) {
+            $defaultFormat = 'double';
+            $condition     = ['<=', $filterQuery];
+        } elseif ($filter == self::FILTER_BETWEEN) {
+            $defaultFormat    = 'decimal';
+            $condition        = ['between', $filterQuery];
+            $queryParamAction = ['explode', $this->betweenSeparator];
+        } elseif ($filter == self::FILTER_LIST_AJAX) {
+            $pluginOptions = [
+                'allowClear'         => true,
+                'minimumInputLength' => 3,
+                'language'           => [
+                    'errorLoading' => new JsExpression("function () { return 'Waiting for results...'; }"),
+                ],
+                'ajax'               => [
+                    'url'      => Url::to(ArrayHelper::getValue($this->dropDownOptions, 'ajaxUrl')),
+                    'dataType' => 'json',
+                    'data'     => new JsExpression('function(params) { return {q:params.term}; }')
+                ],
+                'escapeMarkup'       => new JsExpression('function (markup) { return markup; }'),
+                'templateResult'     => new JsExpression('function(city) { return city.text; }'),
+                'templateSelection'  => new JsExpression('function (city) { return city.text; }'),
+            ];
 
-                $defaultFormat       = 'text';
-                $condition           = ['=', $attributeQuery];
-                $filterType          = $this->dropdownClass;
-                $filterWidgetOptions = ArrayHelper::merge(
-                    ['options' => ['placeholder' => $attributeLabel]],
-                    $this->dropdownOptions,
-                    ArrayHelper::getValue($filterOptions, 'dropdownOptions', []),
-                    ['pluginOptions' => $pluginOptions]
-                );
-                break;
+            ArrayHelper::remove($this->dropDownOptions, 'ajaxUrl');
 
-            case self::FILTER_DATE_RANGE:
-                $defaultFormat       = 'date';
-                $filterType          = $this->dateRangePickerClass;
-                $filterWidgetOptions = $this->dateRangePickerOptions;
-                $condition           = ['between', $attributeQuery];
-                break;
-
-            case self::FILTER_DATE:
-                $defaultFormat       = 'date';
-                $filterType          = $this->datePickerClass;
-                $filterWidgetOptions = $this->datePickerOptions;
-                $condition           = ['=', $attributeQuery];
-                break;
-
-            case self::FILTER_DATETIME:
-                $defaultFormat       = 'datetime';
-                $filterType          = $this->datePickerClass;
-                $filterWidgetOptions = $this->datePickerOptions;
-                $condition           = ['between', $attributeQuery];
-
-                break;
-
-            default:
-                $defaultFormat = 'text';
-                $condition     = ['=', $attributeQuery];
-                break;
-
+            $defaultFormat       = 'text';
+            $condition           = ['=', $filterQuery];
+            $filterType          = $this->dropDownClass;
+            $filterWidgetOptions = ArrayHelper::merge(
+                ['options' => ['placeholder' => $attributeLabel]],
+                $this->dropDownOptions,
+                ArrayHelper::getValue($columnOptions, 'widgetOptions', []),
+                ['pluginOptions' => $pluginOptions]
+            );
         }
 
-        $this->_filters[$attribute][] = $condition;
+        $this->_filters[$attribute]['condition']        = $condition;
+        $this->_filters[$attribute]['queryParamAction'] = $queryParamAction;
 
-        $this->_columns[$attribute]['format']    = ArrayHelper::getValue($filterOptions, 'format', $defaultFormat);
+        $this->_columns[$attribute]['format']    = ArrayHelper::getValue($columnOptions, 'format', $defaultFormat);
         $this->_columns[$attribute]['label']     = $attributeLabel;
         $this->_columns[$attribute]['attribute'] = $attribute;
 
-        $this->_columns[$attribute]['value'] = ArrayHelper::getValue($filterOptions, 'value', $attribute);
+        $this->_columns[$attribute]['value'] = ArrayHelper::getValue($columnOptions, 'value', $attribute);
         if ($this->_columns[$attribute]['format'] == 'phone') {
             $this->_columns[$attribute]['format'] = 'html';
 
@@ -280,18 +262,9 @@ class BaseGrid extends ActiveRecord
         }
     }
 
-    /**
-     * @return array
-     *
-     */
-    public function queryRules()
+    public function queryRelated($column, $tableName)
     {
-        $queryRules = [];
-        foreach ($this->getAttributesKey() as $attributeKey) {
-            $queryRules[$attributeKey] = $this->tableName() . '.' . $attributeKey;
-        }
-
-        return $queryRules;
+        return $tableName . '.' . $column;
     }
 
     public function rules()
@@ -305,6 +278,7 @@ class BaseGrid extends ActiveRecord
 
     public function getDataProvider($searchQuery = false)
     {
+
         $query = $searchQuery ?: self::find();
 
         if ($this->joinWith) {
@@ -317,7 +291,7 @@ class BaseGrid extends ActiveRecord
 
         $activeDataProviderConfig = [
             'query'      => $query,
-            'pagination' => ['pageSize' => $this->pageSize,],
+            'pagination' => ['pageSize' => $this->pageSize],
             'key'        => $this->sortKey
         ];
 
@@ -332,34 +306,39 @@ class BaseGrid extends ActiveRecord
             return $dataProvider;
         }
 
-        foreach ($this->getColumns() as $attributeKey => $data) {
+
+        foreach ($this->_columns as $attributeKey => $data) {
             if (isset($data['class'])) {
                 continue;
             }
 
             foreach ($this->_filters[$attributeKey] as $filter) {
+                $filterCondition  = ArrayHelper::getValue($filter, 'condition');
+                $queryParamAction = ArrayHelper::getValue($filter, 'queryParamsAction', false);
+
                 $dataProvider->sort->attributes[$attributeKey] = [
-                    'asc'  => [$this->queryRules()[$attributeKey] => SORT_ASC],
-                    'desc' => [$this->queryRules()[$attributeKey] => SORT_DESC],
+                    'asc'  => [$this->_queryRules[$attributeKey] => SORT_ASC],
+                    'desc' => [$this->_queryRules[$attributeKey] => SORT_DESC],
                 ];
 
-                if ($filter[0] != 'between') {
-                    $filter[] = $this->$attributeKey;
-                } else {
-                    $explodedDate = explode($this->dateRangeFilterSeparator, $this->$attributeKey);
-                    if (count($explodedDate) == 2) {
-                        $filter[] = $explodedDate[0];
-                        $filter[] = $explodedDate[1];
-                    } else {
-                        $filter = [$attributeKey => $this->$attributeKey];
+                if ($queryParamAction) {
+                    if ($queryParamAction[0] == 'explode') {
+                        $explodedDate = explode($queryParamAction[1], $this->$attributeKey);
+
+                        if (count($explodedDate) == 2) {
+                            $filterCondition[] = $explodedDate[0];
+                            $filterCondition[] = $explodedDate[1];
+                        } else {
+                            $filterCondition = [$queryParamAction => $this->$attributeKey];
+                        }
                     }
+                } else {
+                    $filterCondition[] = $this->$attributeKey;
                 }
 
-
-                $query->andFilterWhere($filter);
+                $query->andFilterWhere($filterCondition);
             }
         }
-
 
         return $dataProvider;
     }
@@ -412,4 +391,48 @@ class BaseGrid extends ActiveRecord
     {
         return $this->_filters;
     }
+
+    public function queryCount($column, $tableName = null, $condition = [], $fullSelect = false, $db = null)
+    {
+        return $this->queryColumn('COUNT', $column, $tableName, $condition, $fullSelect, $db);
+    }
+
+    private function queryColumn($scalar, $column, $tableName = null, $condition = [], $fullSelect = false, $db = null)
+    {
+        if ($tableName === null) {
+            $tableName = $this->tableName();
+        }
+
+        if ($fullSelect) {
+            $query = (new Query())->select($scalar . '(' . $column . ')')
+                ->from($tableName)
+                ->where($condition)
+                ->createCommand($db);
+
+            return $query->getRawSql();
+        } else {
+            $query = $scalar . '(' . $tableName . '.' . $column . ')';
+        }
+
+        return '(' . $query . ')';
+    }
+
+    public function queryConcat($a, $b)
+    {
+        $args = func_get_args();
+
+        $query = 'CONCAT(';
+
+        foreach ($args as $index => $arg) {
+            $query .= $index == 0 ? '\'' . $arg . '\'' : ',\'' . $arg . '\'';
+        }
+
+        return $query . ')';
+    }
+
+    public function querySum($column, $tableName = null, $condition = [], $fullSelect = false, $db = null)
+    {
+        return $this->queryColumn('SUM', $column, $tableName, $condition, $fullSelect, $db);
+    }
+
 }
