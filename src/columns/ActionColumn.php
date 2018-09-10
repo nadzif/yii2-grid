@@ -80,6 +80,7 @@ class ActionColumn extends KartikActionColumn
                 return Html::a('<i class="' . $icon . '"></i>', '#', [
                     'title'      => $title,
                     'aria-label' => $title,
+                    'class'      => 'btn btn-link text-info p-0',
                     'onclick'    => "
                                 var a = this;
                                 if (yii.confirm('$confirmationMessage')) {
