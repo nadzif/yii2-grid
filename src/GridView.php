@@ -49,6 +49,7 @@ class GridView extends KartikGridView
 
     public $updateView;
     public $updateFormClass;
+    public $updateViewParams = [];
 
     public $pageSizeData = [
         5   => 5,
@@ -144,7 +145,8 @@ class GridView extends KartikGridView
 
         if ($this->actionAjax) {
             $updateFormModel = new $this->updateFormClass;
-            echo $this->getView()->render($this->updateView, ['model' => $updateFormModel]);
+            echo $this->getView()
+                ->render($this->updateView, ArrayHelper::merge(['model' => $updateFormModel], $this->updateViewParams));
         }
 
     }
