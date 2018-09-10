@@ -48,7 +48,6 @@ class GridView extends KartikGridView
     public $actionAjax = true;
 
     public $updateView;
-    public $updateFormClass;
     public $updateViewParams = [];
 
     public $pageSizeData = [
