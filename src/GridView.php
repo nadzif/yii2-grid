@@ -143,9 +143,8 @@ class GridView extends KartikGridView
         echo Html::endTag('div');;
 
         if ($this->actionAjax) {
-            $updateFormModel = new $this->updateFormClass;
             echo $this->getView()
-                ->render($this->updateView, ArrayHelper::merge(['model' => $updateFormModel], $this->updateViewParams));
+                ->render($this->updateView, $this->updateViewParams);
         }
 
     }
