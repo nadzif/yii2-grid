@@ -143,7 +143,6 @@ class GridView extends KartikGridView
     {
         echo Html::beginTag('div', ['class' => 'gridview-wrapper']);;
         parent::run();
-        echo Html::endTag('div');;
 
         if ($this->actionAjax) {
             if ($this->updateView && $this->updateViewParams) {
@@ -153,7 +152,7 @@ class GridView extends KartikGridView
                 ));
             }
         }
-
+        echo Html::endTag('div');;
     }
 
     protected function initLayout()
