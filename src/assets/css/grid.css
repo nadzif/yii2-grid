@@ -30,6 +30,10 @@
     top: 0;
 }
 
+.gridview-wrapper .gridview-toolbar-left > * {
+    margin-right: 5px;
+}
+
 .gridview-wrapper .gridview-toolbar-left,
 .gridview-wrapper .datatables-tools {
     width: 100%;
