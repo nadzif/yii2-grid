@@ -40,7 +40,7 @@ class ActionColumn extends KartikActionColumn
             return call_user_func($this->urlCreator, $action, $model, $key, $index, $this);
         }
 
-        $params    = is_array($key) ? $key : [$this->keyName => (string)$key];
+        $params = is_array($key) ? $key : [$this->keyName => (string)$key];
         $params[0] = $this->controller ? $this->controller . '/' . $action : $action;
 
         return Url::toRoute($params);
@@ -57,20 +57,28 @@ class ActionColumn extends KartikActionColumn
     {
         if ($name === 'update-ajax') {
             $this->buttons[$name] = function ($url) use ($name, $title, $icon) {
+                $js = new JsExpression("
+                    const modal = $(this).parents('.gridview-wrapper').find('.update-form-action');
+                    const form = modal.find('.modal-body form');
+
+                    $.ajax({
+                          url: '" . Url::to($url) . "',
+                    }).done(function(data) {
+                        form.attr('action', '". Url::to($url) ."');
+                    
+                        if (typeof data === 'object') {
+                            $.each(data, (name, value) => {
+                                const input = form.find('[name=\"' + modal.data('model') + '[' + name + ']\"]');
+                                input.val(value).change();
+                            });
+                        }
+                        modal.modal('show');
+                    });
+                ");
                 return Html::button(false, [
                     'class'   => 'btn btn-link text-info p-0 ' . $icon,
                     'titile'  => $title,
-                    'onclick' => new JsExpression(
-                        '(function(e){
-                            console.log(e)
-                        })()
-                        $.ajax({
-                          url: \'' . Url::to($url) . '\',
-                        }).done(function(html) {
-                          var a = $(\'#grid-update-section\').html(html);
-                          $(\'#grid-update-section\').find(\'.modal\').modal(\'show\');
-                        });'
-                    )
+                    'onclick' => $js
                 ]);
             };
         } elseif ($name === 'delete-ajax') {
