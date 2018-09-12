@@ -69,7 +69,20 @@ class ActionColumn extends KartikActionColumn
                         if (typeof data === 'object') {
                             $.each(data, (name, value) => {
                                 const input = form.find('[name=\"' + modal.data('model') + '[' + name + ']\"]');
-                                input.val(value).change();
+                                
+                                switch (input.prop('tagName')) {
+                                    case 'INPUT':
+                                    case 'SELECT':
+                                        input.val(value).change();
+                                        input.find('option').attr('selected', false);
+                                        input.find('option[value=\"' + value + '\"]').attr('selected', true);
+                                        break;
+                                    case 'TEXTAREA':
+                                        input.text(value);
+                                        break;
+                                }
+                                
+                                
                             });
                         }
                         modal.modal('show');
