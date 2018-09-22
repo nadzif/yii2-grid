@@ -240,8 +240,7 @@ class BaseGrid extends ActiveRecord
             );
         }
 
-        $this->_filters[$attribute]['condition']        = $condition;
-        $this->_filters[$attribute]['queryParamAction'] = $queryParamAction;
+        $this->_filters[$attribute][] = ['condition' => $condition, 'queryParamAction' => $queryParamAction,];
 
         $this->_columns[$attribute]['format']    = ArrayHelper::getValue($columnOptions, 'format', $defaultFormat);
         $this->_columns[$attribute]['label']     = $attributeLabel;
@@ -308,11 +307,13 @@ class BaseGrid extends ActiveRecord
 
 
         foreach ($this->_columns as $attributeKey => $data) {
-            if (isset($data['class'])) {
+            if (empty($this->$attributeKey) || isset($data['class'])) {
                 continue;
             }
 
-            foreach ($this->_filters[$attributeKey] as $filter) {
+            $attributeFilters = $this->_filters[$attributeKey];
+            foreach ($attributeFilters as $filter) {
+
                 $filterCondition  = ArrayHelper::getValue($filter, 'condition');
                 $queryParamAction = ArrayHelper::getValue($filter, 'queryParamsAction', false);
 
@@ -338,6 +339,7 @@ class BaseGrid extends ActiveRecord
 
                 $query->andFilterWhere($filterCondition);
             }
+
         }
 
         return $dataProvider;
