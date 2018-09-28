@@ -275,10 +275,15 @@ class BaseGrid extends ActiveRecord
         ];
     }
 
-    public function getDataProvider($searchQuery = false)
+    public $condition;
+    public function getDataProvider()
     {
 
-        $query = $searchQuery ?: self::find();
+        $query = self::find();
+
+        if($this->condition){
+            $query->where($this->condition);
+        }
 
         if ($this->joinWith) {
             $query->joinWith($this->joinWith);
