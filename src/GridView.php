@@ -31,7 +31,7 @@ class GridView extends KartikGridView
     public $pjax             = true;
     public $responsiveWrap   = true;
     public $export           = [
-        'fontAwesome'      => false,
+        'fontAwesome'      => true,
         'showConfirmAlert' => true,
         'target'           => '_blank',
         'icon'             => 'export'

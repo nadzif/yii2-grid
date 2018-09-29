@@ -23,7 +23,7 @@ class ActionColumn extends KartikActionColumn
     {
         parent::init();
 
-        if ($this->ajax) {
+        if (!$this->template && $this->ajax) {
             $this->template = '{update-ajax} {delete-ajax}';
         }
 
@@ -40,7 +40,7 @@ class ActionColumn extends KartikActionColumn
             return call_user_func($this->urlCreator, $action, $model, $key, $index, $this);
         }
 
-        $params = is_array($key) ? $key : [$this->keyName => (string)$key];
+        $params    = is_array($key) ? $key : [$this->keyName => (string)$key];
         $params[0] = $this->controller ? $this->controller . '/' . $action : $action;
 
         return Url::toRoute($params);
@@ -64,7 +64,7 @@ class ActionColumn extends KartikActionColumn
                     $.ajax({
                           url: '" . Url::to($url) . "',
                     }).done(function(data) {
-                        form.attr('action', '". Url::to($url) ."');
+                        form.attr('action', '" . Url::to($url) . "');
                     
                         if (typeof data === 'object') {
                             $.each(data, (name, value) => {
