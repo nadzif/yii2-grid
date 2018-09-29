@@ -11,7 +11,7 @@ class ActionColumn extends KartikActionColumn
 {
 
     public $action;
-    public $keyName       = 'hashId';
+    public $keyName       = 'id';
     public $header        = '<i class="icon ion-navicon-round"></i>';
     public $width         = '120px';
     public $pjax          = false;
