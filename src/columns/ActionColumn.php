@@ -2,6 +2,7 @@
 
 namespace nadzif\grid\columns;
 
+use demogorgorn\ajax\AjaxSubmitButton;
 use kartik\grid\ActionColumn as KartikActionColumn;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -55,6 +56,13 @@ class ActionColumn extends KartikActionColumn
 
     protected function setDefaultButton($name, $title, $icon)
     {
+        $gridId        = $this->grid->id;
+        $refreshPjaxJs = new JsExpression("
+            function(data) {
+                window.FloatAlert.renderAlert(data);
+                $.pjax.reload({container: '#$gridId'});
+            }");
+
         if ($name === 'update-ajax') {
             $this->buttons[$name] = function ($url) use ($name, $title, $icon) {
                 $js = new JsExpression("
@@ -95,26 +103,20 @@ class ActionColumn extends KartikActionColumn
                 ]);
             };
         } elseif ($name === 'delete-ajax') {
-            $this->buttons[$name] = function ($url) use ($name, $title, $icon) {
+            $this->buttons[$name] = function ($url) use ($name, $title, $icon, $refreshPjaxJs) {
                 $confirmationMessage = \Yii::t('app', 'Are you sure want to delete this data?');
 
-                return Html::a('<i class="' . $icon . '"></i>', '#', [
-                    'title'      => $title,
-                    'aria-label' => $title,
-                    'class'      => 'btn btn-link text-info p-0',
-                    'onclick'    => "
-                                var a = this;
-                                if (yii.confirm('$confirmationMessage')) {
-                                    $.ajax('$url', {
-                                        type: 'POST'
-                                    }).done(function(data) {
-                                    var id = $(a).parents('[data-pjax-container]').attr('id');
-                                        $.pjax.reload({container: '#'+id});
-                                        window.FloatAlert.renderAlert(data);
-                                    });
-                                }
-                                return false;
-                            ",
+                return AjaxSubmitButton::widget([
+                    'tagName'     => 'a',
+                    'label'       => false,
+                    'icon'        => $icon,
+                    'ajaxOptions' => [
+                        'type'       => 'POST',
+                        'url'        => $url,
+                        'beforeSend' => new JsExpression("function(){return confirm('$confirmationMessage')}"),
+                        'success'    => $refreshPjaxJs,
+                    ],
+                    'options'     => ['title' => $title, 'class' => 'btn btn-link text-info p-0'],
                 ]);
             };
         }
