@@ -62,7 +62,7 @@ class GridView extends KartikGridView
         250 => 250,
     ];
 
-
+    public $toolbarButtons;
 
     public function renderExport()
     {
@@ -181,6 +181,10 @@ class GridView extends KartikGridView
                     ['gridId' => $this->id],
                     $this->createViewParams
                 ));
+            }
+
+            foreach ($this->toolbarButtons as $toolbarButton) {
+                echo $toolbarButton;
             }
             echo Html::endTag('div');;
 
