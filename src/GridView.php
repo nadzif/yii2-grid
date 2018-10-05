@@ -62,7 +62,7 @@ class GridView extends KartikGridView
         250 => 250,
     ];
 
-    public $toolbarButtons;
+    public $toolbarButtons = [];
 
     public function renderExport()
     {
