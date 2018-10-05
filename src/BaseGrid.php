@@ -3,6 +3,7 @@
 namespace nadzif\grid;
 
 use http\Url;
+use kartik\grid\DataColumn;
 use nadzif\grid\columns\ActionColumn;
 use nadzif\grid\columns\CheckboxColumn;
 use nadzif\grid\columns\ExpandRowColumn;
@@ -241,6 +242,7 @@ class BaseGrid extends ActiveRecord
         }
 
         $this->_filters[$attribute][] = ['condition' => $condition, 'queryParamAction' => $queryParamAction,];
+        $this->_columns[$attribute]['class'] = ArrayHelper::getValue($columnOptions, 'class', DataColumn::className());
 
         $this->_columns[$attribute]['format']    = ArrayHelper::getValue($columnOptions, 'format', $defaultFormat);
         $this->_columns[$attribute]['label']     = $attributeLabel;
